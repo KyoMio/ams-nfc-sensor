@@ -1,0 +1,2214 @@
+[
+    {
+        "id": "6259de69a30e1a43",
+        "type": "tab",
+        "label": "拓竹耗材自动管理-外挂料盘",
+        "disabled": false,
+        "info": "根据打印耗材记录自动更新spoolman的耗材用量",
+        "env": []
+    },
+    {
+        "id": "c8f67ac4ef40d5ed",
+        "type": "http in",
+        "z": "6259de69a30e1a43",
+        "name": "外挂料盘更新",
+        "url": "/update_external_spool",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 70,
+        "y": 440,
+        "wires": [
+            [
+                "92f89cb076aec201"
+            ]
+        ]
+    },
+    {
+        "id": "92f89cb076aec201",
+        "type": "change",
+        "z": "6259de69a30e1a43",
+        "name": "转换数据键",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{ \"value\": $number(payload.id) }",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "slot",
+                "pt": "msg",
+                "to": "external",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 270,
+        "y": 440,
+        "wires": [
+            [
+                "61f4ef3a8aa9ca30",
+                "c5d6e7f8.a9b0c1"
+            ]
+        ]
+    },
+    {
+        "id": "61f4ef3a8aa9ca30",
+        "type": "api-call-service",
+        "z": "6259de69a30e1a43",
+        "name": "更新料盘状态",
+        "server": "f1ac778c9ae87c9e",
+        "version": 7,
+        "debugenabled": true,
+        "action": "input_number.set_value",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "input_number.spoolman_id"
+        ],
+        "labelId": [],
+        "data": "payload",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "data"
+            }
+        ],
+        "queue": "none",
+        "blockInputOverrides": true,
+        "domain": "input_number",
+        "service": "set_value",
+        "x": 480,
+        "y": 440,
+        "wires": [
+            [
+                "55f58c44882fdca0"
+            ]
+        ]
+    },
+    {
+        "id": "55f58c44882fdca0",
+        "type": "http response",
+        "z": "6259de69a30e1a43",
+        "name": "",
+        "statusCode": "200",
+        "headers": {},
+        "x": 720,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "2ad6136fd8fb6fc8",
+        "type": "comment",
+        "z": "6259de69a30e1a43",
+        "name": "更新bambu耗材名称（每次部署后需手动执行一次）",
+        "info": "",
+        "x": 190,
+        "y": 1080,
+        "wires": []
+    },
+    {
+        "id": "c5d6e7f8.a9b0c1",
+        "type": "function",
+        "z": "6259de69a30e1a43",
+        "name": "构建 API URL (读取 payload.value)",
+        "func": "// 获取 spool_id\nconst spool_id = msg.payload.value;\n\n// 检查 spool_id 是否有效\nif (spool_id === undefined || spool_id === null) {\n    node.error(\"未在 msg.payload.value 中找到有效的料盘 ID\", msg);\n    return null; // 停止流程\n}\n\nconst spoolman_url = \"http://YOUR_SPOOLMAN_IP:PORT\";\n\n// 构建完整的 API 请求 URL\nmsg.url = `${spoolman_url}/api/v1/spool/${spool_id}`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 600,
+        "y": 540,
+        "wires": [
+            [
+                "d9e0f1a2.b3c4d5"
+            ]
+        ]
+    },
+    {
+        "id": "d9e0f1a2.b3c4d5",
+        "type": "http request",
+        "z": "6259de69a30e1a43",
+        "name": "GET Spoolman 料盘信息",
+        "method": "GET",
+        "ret": "json",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "basic",
+        "senderr": false,
+        "headers": [],
+        "x": 870,
+        "y": 540,
+        "wires": [
+            [
+                "e7f8g9h0.i1j2k3"
+            ]
+        ]
+    },
+    {
+        "id": "e7f8g9h0.i1j2k3",
+        "type": "function",
+        "z": "6259de69a30e1a43",
+        "name": "提取名称并转换为 ID",
+        "func": "// 1. 从 Node-RED 全局变量中获取映射表\nconst bambuName_to_ID_Map = global.get(\"bambuName_to_ID_Map\");\n\n// 检查映射表是否存在\nif (!bambuName_to_ID_Map || Object.keys(bambuName_to_ID_Map).length === 0) {\n    node.error(\"全局耗材映射 (bambuName_to_ID_Map) 未找到或为空. \" + \n               \"请确保 '耗材导入spoolman' 流程已成功运行至少一次.\", msg);\n    return null; // 停止流程\n}\n\n// --- 定义常量和备用值 ---\nconst extraFieldName = \"bambu_filament_id\"; // Spoolman中的字段Key\nconst defaultColor = \"FFFFFF\"; // 备用颜色 (白色)\nconst defaultTemp = 220;     // 备用温度\nconst defaultBambuID = bambuName_to_ID_Map[\"Generic PLA\"] || \"GFL99\"; \n\n\n// 2. --- 解析 Spoolman 响应 ---\nlet spool;\ntry {\n    spool = (typeof msg.payload === 'string') ? JSON.parse(msg.payload) : msg.payload;\n} catch (e) {\n    node.error(\"输入不是有效的JSON，解析失败: \" + e.message, msg);\n    return null; // 停止流程\n}\n\n// 3. --- 获取耗材数据 (带备用值) ---\nconst filament = spool.filament;\nif (!filament) {\n    node.error(\"JSON中未找到 filament 属性\", msg);\n    return null;\n}\n\n// 提取所有需要的值\nconst rawValue = filament.extra ? filament.extra[extraFieldName] : null;\nconst color_hex = filament.color_hex || defaultColor;\nconst material = filament.material || \"PLA\"; // 备用为 PLA\n\n// 4. --- 流程 1: tray_info_idx (Bambu ID) ---\nlet bambuFilamentName;\nif (!rawValue) {\n    node.warn(`在耗材 ${filament.id} 上未找到 ${extraFieldName} 字段，将使用默认ID.`);\n    bambuFilamentName = null;\n} else {\n    bambuFilamentName = String(rawValue).replace(/^\\\"|\\\"$/g, '');\n}\n\n// 使用从全局变量加载的映射表进行查找\nconst tray_info_idx = bambuName_to_ID_Map[bambuFilamentName] || defaultBambuID;\n\nif (tray_info_idx === defaultBambuID && bambuFilamentName !== null) {\n     node.warn(`映射表中未找到名称: '${bambuFilamentName}' (原始值: '${rawValue}'). 已使用默认ID: ${defaultBambuID}`);\n}\n\n// 5. --- 流程 2: tray_color (RGBA) ---\nlet tray_color;\ntry {\n    let clean_hex = String(color_hex).replace(/^#/, ''); // 移除 #\n    if (clean_hex.length === 6) {\n        // 6位RGB -> 8位RGBA (添加 FF 表示不透明)\n        tray_color = clean_hex.toUpperCase() + \"FF\"; \n    } else if (clean_hex.length === 8) {\n        // 已经是 8 位 RGBA\n        tray_color = clean_hex.toUpperCase(); \n    } else {\n        node.warn(`无效的 color_hex: '${color_hex}', 使用默认白色.`);\n        tray_color = defaultColor + \"FF\";\n    }\n} catch (e) {\n     node.warn(`处理 color_hex 出错: ${e.message}, 使用默认白色.`);\n     tray_color = defaultColor + \"FF\";\n}\n\n// 6. --- 流程 3 & 4: tray_type 和 Temps ---\nconst tray_type = material;\nconst nozzle_temp_min = defaultTemp;\nconst nozzle_temp_max = defaultTemp; \n\n// 7. --- 构建最终 msg.payload ---\nmsg.payload = {\n    tray_info_idx: tray_info_idx,\n    tray_color: tray_color,\n    tray_type: tray_type,\n    nozzle_temp_min: nozzle_temp_min,\n    nozzle_temp_max: nozzle_temp_max\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1100,
+        "y": 540,
+        "wires": [
+            [
+                "68baa70bd4b5bee6"
+            ]
+        ]
+    },
+    {
+        "id": "6564e8709b16f93c",
+        "type": "api-call-service",
+        "z": "6259de69a30e1a43",
+        "name": "更新打印机配置（外挂）",
+        "server": "f1ac778c9ae87c9e",
+        "version": 7,
+        "debugenabled": false,
+        "action": "bambu_lab.set_filament",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "sensor.YOUR_PRINTER_ID_externalspool_external_spool"
+        ],
+        "labelId": [],
+        "data": "payload",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": true,
+        "domain": "bambu_lab",
+        "service": "set_filament",
+        "x": 1730,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "da80d9ede9339e45",
+        "type": "comment",
+        "z": "6259de69a30e1a43",
+        "name": "监控打印状态",
+        "info": "",
+        "x": 70,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "2f82fa188de3f4fa",
+        "type": "comment",
+        "z": "6259de69a30e1a43",
+        "name": "接口：更新外挂料盘/ams",
+        "info": "",
+        "x": 110,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "625f2390fac3406b",
+        "type": "server-state-changed",
+        "z": "6259de69a30e1a43",
+        "name": "监测料盘1变化",
+        "server": "f1ac778c9ae87c9e",
+        "version": 6,
+        "outputs": 1,
+        "exposeAsEntityConfig": "",
+        "entities": {
+            "entity": [
+                "sensor.ams_slot_1"
+            ],
+            "substring": [],
+            "regex": []
+        },
+        "outputInitially": false,
+        "stateType": "str",
+        "ifState": "",
+        "ifStateType": "str",
+        "ifStateOperator": "is",
+        "outputOnlyOnStateChange": true,
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "ignorePrevStateNull": false,
+        "ignorePrevStateUnknown": false,
+        "ignorePrevStateUnavailable": false,
+        "ignoreCurrentStateUnknown": false,
+        "ignoreCurrentStateUnavailable": false,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "data",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "eventData"
+            },
+            {
+                "property": "topic",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "triggerId"
+            }
+        ],
+        "x": 80,
+        "y": 560,
+        "wires": [
+            [
+                "b9b532ca65e736a5"
+            ]
+        ]
+    },
+    {
+        "id": "15d87aa45d2ac7e9",
+        "type": "api-call-service",
+        "z": "6259de69a30e1a43",
+        "name": "更新打印机配置ams-1",
+        "server": "f1ac778c9ae87c9e",
+        "version": 7,
+        "debugenabled": false,
+        "action": "bambu_lab.set_filament",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "sensor.YOUR_PRINTER_AMS_ID_tray_1"
+        ],
+        "labelId": [],
+        "data": "payload",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": true,
+        "domain": "bambu_lab",
+        "service": "set_filament",
+        "x": 1720,
+        "y": 540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b9b532ca65e736a5",
+        "type": "change",
+        "z": "6259de69a30e1a43",
+        "name": "转换数据键",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{ \"value\": $number(payload) }",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "slot",
+                "pt": "msg",
+                "to": "ams1",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 270,
+        "y": 560,
+        "wires": [
+            [
+                "c5d6e7f8.a9b0c1"
+            ]
+        ]
+    },
+    {
+        "id": "10be69f51b509af1",
+        "type": "switch",
+        "z": "6259de69a30e1a43",
+        "name": "",
+        "property": "slot",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "external",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "ams1",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "ams2",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "ams3",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "ams4",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 5,
+        "x": 1450,
+        "y": 540,
+        "wires": [
+            [
+                "6564e8709b16f93c"
+            ],
+            [
+                "15d87aa45d2ac7e9"
+            ],
+            [
+                "9cd9261c517b0793"
+            ],
+            [
+                "4134d029dc1a763a"
+            ],
+            [
+                "bcbaf1b14eb6e4e7"
+            ]
+        ]
+    },
+    {
+        "id": "220444ae43157561",
+        "type": "server-state-changed",
+        "z": "6259de69a30e1a43",
+        "name": "监测料盘2变化",
+        "server": "f1ac778c9ae87c9e",
+        "version": 6,
+        "outputs": 1,
+        "exposeAsEntityConfig": "",
+        "entities": {
+            "entity": [
+                "sensor.ams_slot_2"
+            ],
+            "substring": [],
+            "regex": []
+        },
+        "outputInitially": false,
+        "stateType": "str",
+        "ifState": "",
+        "ifStateType": "str",
+        "ifStateOperator": "is",
+        "outputOnlyOnStateChange": true,
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "ignorePrevStateNull": false,
+        "ignorePrevStateUnknown": false,
+        "ignorePrevStateUnavailable": false,
+        "ignoreCurrentStateUnknown": false,
+        "ignoreCurrentStateUnavailable": false,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "data",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "eventData"
+            },
+            {
+                "property": "topic",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "triggerId"
+            }
+        ],
+        "x": 80,
+        "y": 620,
+        "wires": [
+            [
+                "af6d41dd354c592b"
+            ]
+        ]
+    },
+    {
+        "id": "af6d41dd354c592b",
+        "type": "change",
+        "z": "6259de69a30e1a43",
+        "name": "转换数据键",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{ \"value\": $number(payload) }",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "slot",
+                "pt": "msg",
+                "to": "ams2",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 270,
+        "y": 620,
+        "wires": [
+            [
+                "c5d6e7f8.a9b0c1"
+            ]
+        ]
+    },
+    {
+        "id": "6799d83877e8e274",
+        "type": "server-state-changed",
+        "z": "6259de69a30e1a43",
+        "name": "监测料盘3变化",
+        "server": "f1ac778c9ae87c9e",
+        "version": 6,
+        "outputs": 1,
+        "exposeAsEntityConfig": "",
+        "entities": {
+            "entity": [
+                "sensor.ams_slot_3"
+            ],
+            "substring": [],
+            "regex": []
+        },
+        "outputInitially": false,
+        "stateType": "str",
+        "ifState": "",
+        "ifStateType": "str",
+        "ifStateOperator": "is",
+        "outputOnlyOnStateChange": true,
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "ignorePrevStateNull": false,
+        "ignorePrevStateUnknown": false,
+        "ignorePrevStateUnavailable": false,
+        "ignoreCurrentStateUnknown": false,
+        "ignoreCurrentStateUnavailable": false,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "data",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "eventData"
+            },
+            {
+                "property": "topic",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "triggerId"
+            }
+        ],
+        "x": 80,
+        "y": 680,
+        "wires": [
+            [
+                "68b8be9b34606d1a"
+            ]
+        ]
+    },
+    {
+        "id": "68b8be9b34606d1a",
+        "type": "change",
+        "z": "6259de69a30e1a43",
+        "name": "转换数据键",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{ \"value\": $number(payload) }",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "slot",
+                "pt": "msg",
+                "to": "ams3",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 270,
+        "y": 680,
+        "wires": [
+            [
+                "c5d6e7f8.a9b0c1"
+            ]
+        ]
+    },
+    {
+        "id": "7cbbf09a50c1d351",
+        "type": "server-state-changed",
+        "z": "6259de69a30e1a43",
+        "name": "监测料盘4变化",
+        "server": "f1ac778c9ae87c9e",
+        "version": 6,
+        "outputs": 1,
+        "exposeAsEntityConfig": "",
+        "entities": {
+            "entity": [
+                "sensor.ams_slot_4"
+            ],
+            "substring": [],
+            "regex": []
+        },
+        "outputInitially": false,
+        "stateType": "str",
+        "ifState": "",
+        "ifStateType": "str",
+        "ifStateOperator": "is",
+        "outputOnlyOnStateChange": true,
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "ignorePrevStateNull": false,
+        "ignorePrevStateUnknown": false,
+        "ignorePrevStateUnavailable": false,
+        "ignoreCurrentStateUnknown": false,
+        "ignoreCurrentStateUnavailable": false,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "data",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "eventData"
+            },
+            {
+                "property": "topic",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "triggerId"
+            }
+        ],
+        "x": 80,
+        "y": 740,
+        "wires": [
+            [
+                "34470f313d6bb37b"
+            ]
+        ]
+    },
+    {
+        "id": "34470f313d6bb37b",
+        "type": "change",
+        "z": "6259de69a30e1a43",
+        "name": "转换数据键",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{ \"value\": $number(payload) }",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "slot",
+                "pt": "msg",
+                "to": "ams4",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 270,
+        "y": 740,
+        "wires": [
+            [
+                "c5d6e7f8.a9b0c1"
+            ]
+        ]
+    },
+    {
+        "id": "9cd9261c517b0793",
+        "type": "api-call-service",
+        "z": "6259de69a30e1a43",
+        "name": "更新打印机配置ams-2",
+        "server": "f1ac778c9ae87c9e",
+        "version": 7,
+        "debugenabled": false,
+        "action": "bambu_lab.set_filament",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "sensor.YOUR_PRINTER_AMS_ID_tray_2"
+        ],
+        "labelId": [],
+        "data": "payload",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": true,
+        "domain": "bambu_lab",
+        "service": "set_filament",
+        "x": 1720,
+        "y": 600,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4134d029dc1a763a",
+        "type": "api-call-service",
+        "z": "6259de69a30e1a43",
+        "name": "更新打印机配置ams-3",
+        "server": "f1ac778c9ae87c9e",
+        "version": 7,
+        "debugenabled": false,
+        "action": "bambu_lab.set_filament",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "sensor.YOUR_PRINTER_AMS_ID_tray_3"
+        ],
+        "labelId": [],
+        "data": "payload",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": true,
+        "domain": "bambu_lab",
+        "service": "set_filament",
+        "x": 1720,
+        "y": 660,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "bcbaf1b14eb6e4e7",
+        "type": "api-call-service",
+        "z": "6259de69a30e1a43",
+        "name": "更新打印机配置ams-4",
+        "server": "f1ac778c9ae87c9e",
+        "version": 7,
+        "debugenabled": false,
+        "action": "bambu_lab.set_filament",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "sensor.YOUR_PRINTER_AMS_ID_tray_4"
+        ],
+        "labelId": [],
+        "data": "payload",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "blockInputOverrides": true,
+        "domain": "bambu_lab",
+        "service": "set_filament",
+        "x": 1720,
+        "y": 720,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5211d23e43ea72c5",
+        "type": "trigger-state",
+        "z": "6259de69a30e1a43",
+        "name": "监控打印机状态 ",
+        "server": "f1ac778c9ae87c9e",
+        "version": 5,
+        "inputs": 0,
+        "outputs": 2,
+        "exposeAsEntityConfig": "",
+        "entities": {
+            "entity": [
+                "sensor.YOUR_PRINTER_ID_print_status"
+            ],
+            "substring": [],
+            "regex": []
+        },
+        "debugEnabled": false,
+        "constraints": [
+            {
+                "targetType": "this_entity",
+                "targetValue": "",
+                "propertyType": "current_state",
+                "propertyValue": "new_state.state",
+                "comparatorType": "is",
+                "comparatorValueDatatype": "re",
+                "comparatorValue": "failed|finish"
+            },
+            {
+                "targetType": "this_entity",
+                "targetValue": "",
+                "propertyType": "previous_state",
+                "propertyValue": "old_state.state",
+                "comparatorType": "is",
+                "comparatorValueDatatype": "re",
+                "comparatorValue": "running|pause"
+            }
+        ],
+        "customOutputs": [],
+        "outputInitially": false,
+        "stateType": "str",
+        "enableInput": false,
+        "x": 80,
+        "y": 180,
+        "wires": [
+            [
+                "08c8844e1abc8b8f",
+                "f0a24e0694420d4a",
+                "0b76c7e320439776",
+                "e9a9e4119d1f762b",
+                "9177524d8e51fd56",
+                "4f9804984cd887e1",
+                "735bb3d24e663b47",
+                "5193ef4d64022474"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "7c0f6d6d708eff15",
+        "type": "join",
+        "z": "6259de69a30e1a43",
+        "name": "合并",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "payload",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": false,
+        "accumulate": false,
+        "timeout": "3",
+        "count": "5",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "num",
+        "reduceFixup": "",
+        "x": 770,
+        "y": 180,
+        "wires": [
+            [
+                "d55e15c593aaee01"
+            ]
+        ]
+    },
+    {
+        "id": "08c8844e1abc8b8f",
+        "type": "ha-get-entities",
+        "z": "6259de69a30e1a43",
+        "name": "获取打印重量",
+        "server": "f1ac778c9ae87c9e",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "is",
+                "value": "sensor.YOUR_PRINTER_ID_print_weight",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "array",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "print_data",
+        "outputResultsCount": 1,
+        "x": 480,
+        "y": 80,
+        "wires": [
+            [
+                "7c0f6d6d708eff15"
+            ]
+        ]
+    },
+    {
+        "id": "f0a24e0694420d4a",
+        "type": "ha-get-entities",
+        "z": "6259de69a30e1a43",
+        "name": "获取外挂料盘Spoolman ID",
+        "server": "f1ac778c9ae87c9e",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "is",
+                "value": "input_number.spoolman_id",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "array",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "spool_data",
+        "outputResultsCount": 1,
+        "x": 480,
+        "y": 180,
+        "wires": [
+            [
+                "7c0f6d6d708eff15"
+            ]
+        ]
+    },
+    {
+        "id": "d55e15c593aaee01",
+        "type": "function",
+        "z": "6259de69a30e1a43",
+        "name": "处理耗材使用",
+        "func": "node.warn(\"节点1 (准备请求) 收到: \" + JSON.stringify(msg, null, 2));\n\n// --- 1. 提取所有需要的数据 ---\nvar printPayload = msg.print_data;\nvar spoolPayload = msg.spool_data; // 仅用于外挂\nvar taskPayload = msg.task_data;\nvar progressPayload = msg.progress;\nvar amsData = msg.ams_data; \n\n// --- 2. 安全检查 ---\nif (!Array.isArray(printPayload) || printPayload.length === 0) {\n    node.warn(\"未找到 'print_data'。流程中止。\");\n    return null;\n}\nif (!Array.isArray(progressPayload) || progressPayload.length === 0) {\n    node.warn(\"未找到 'progress'。流程中止。\");\n    return null;\n}\n\n// --- 3. 解析通用数据 ---\nvar taskName = \"未知任务\";\nif (Array.isArray(taskPayload) && taskPayload.length > 0 && taskPayload[0].state) {\n    taskName = taskPayload[0].state;\n} else {\n    node.warn(\"未能从 msg.task_data 中解析任务名称。\");\n}\n\nvar progress = 0.00;\nvar progressInfo = progressPayload[0];\nif (progressInfo && progressInfo.state) {\n    progress = parseFloat(progressInfo.state) / 100;\n} else {\n    node.warn(\"在'progress'中未找到 'state' 字段。流程中止。\");\n    return null;\n}\n\n// 如果打印未完成（进度 < 100%），则中止\n// if (progress < 1.0) {\n//     node.warn(\"打印进度非100% ( \" + progressInfo.state + \"% )，流程中止。\");\n//     return null;\n// }\n\nvar printInfo = printPayload[0];\nif (!printInfo || !printInfo.attributes) {\n    node.warn(\"print_data[0].attributes 无效。流程中止。\");\n    return null;\n}\n\n// --- 4. 准备一个数组来存放所有 API 请求 ---\nvar spoolmanRequests = [];\nvar printAttributes = printInfo.attributes;\n\n// --- 5. 检查外挂料盘 (External Spool) ---\nif (printAttributes['External Spool'] && parseFloat(printAttributes['External Spool']) > 0) {\n    var filamentUsed = parseFloat(printAttributes['External Spool']);\n    \n    // 获取外挂料盘 ID\n    var spoolId = 0;\n    if (Array.isArray(spoolPayload) && spoolPayload.length > 0 && spoolPayload[0].state) {\n        spoolId = parseInt(spoolPayload[0].state);\n    } else {\n        node.warn(\"在'spool_data'中未找到 'state' 字段。跳过外挂料盘。\");\n    }\n\n    if (spoolId > 0 && filamentUsed > 0) {\n        var usedWeight = filamentUsed * progress; \n        \n        spoolmanRequests.push({\n            url: \"http://YOUR_SPOOLMAN_IP:PORT/api/v1/spool/\" + spoolId + \"/use\",\n            payload: { \"use_weight\": usedWeight },\n            method: \"PUT\",\n            headers: { \"Content-Type\": \"application/json\" },\n            task_name_from_ha: taskName,\n            used_weight_from_printer: usedWeight,\n            spool_id_from_ha: spoolId,\n            type: \"external\" // 标记为外挂\n        });\n        node.warn(\"检测到外挂料盘用量: ID \" + spoolId + \", 用量 \" + usedWeight + \"g\");\n    }\n}\n// --- 6. 检查 AMS 料盘 ---\nelse {\n    node.warn(\"未检测到外挂料盘用量。开始检查 AMS... \" + JSON.stringify(amsData));\n    var amsUsed = false;\n    // 遍历 AMS 托盘 (1 到 4)\n    for (var i = 1; i <= 4; i++) {\n        var amsKey = \"AMS 1 Tray \" + i;\n        var sensorName = \"sensor.ams_slot_\" + i;\n\n        if (printAttributes[amsKey] && parseFloat(printAttributes[amsKey]) > 0) {\n            var filamentUsed = parseFloat(printAttributes[amsKey]);\n            var spoolIdStr = amsData[sensorName];\n            var spoolId = spoolIdStr ? parseInt(spoolIdStr) : 0;\n\n            if (spoolId > 0 && filamentUsed > 0) {\n                amsUsed = true;\n                var usedWeight = filamentUsed * progress;\n                \n                spoolmanRequests.push({\n                    url: \"http://YOUR_SPOOLMAN_IP:PORT/api/v1/spool/\" + spoolId + \"/use\",\n                    payload: { \"use_weight\": usedWeight },\n                    method: \"PUT\",\n                    headers: { \"Content-Type\": \"application/json\" },\n                    task_name_from_ha: taskName,\n                    used_weight_from_printer: usedWeight,\n                    spool_id_from_ha: spoolId,\n                    type: \"ams\", // 标记为 AMS\n                    ams_slot_name: amsKey // 传递托盘名称\n                });\n                node.warn(\"检测到 \" + amsKey + \" 用量: ID \" + spoolId + \", 用量 \" + usedWeight + \"g\");\n            } else {\n                 node.warn(\"在 \" + amsKey + \" 检测到用量 (\" + filamentUsed + \"g)，但在 msg.ams_data 中未找到有效的 Spool ID ('\" + spoolIdStr + \"')。跳过。\");\n            }\n        }\n    }\n    if (!amsUsed) {\n        node.warn(\"未在 AMS 托盘 1-4 中检测到任何用量。\");\n    }\n}\n\n// --- 7. 准备输出 ---\nif (spoolmanRequests.length === 0) {\n    node.warn(\"未检测到任何有效的耗材用量 (外挂或 AMS)。流程中止。\");\n    return null;\n}\n\nmsg.batch_id = msg._msgid; \n\nmsg.spoolman_requests = spoolmanRequests;\nmsg.total_requests = spoolmanRequests.length;\n\ndelete msg.payload;\ndelete msg.url;\ndelete msg.method;\ndelete msg.headers;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 940,
+        "y": 180,
+        "wires": [
+            [
+                "c266a1aba9ee4a85"
+            ]
+        ]
+    },
+    {
+        "id": "0b76c7e320439776",
+        "type": "ha-get-entities",
+        "z": "6259de69a30e1a43",
+        "name": "获取任务名称",
+        "server": "f1ac778c9ae87c9e",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "is",
+                "value": "sensor.YOUR_PRINTER_ID_task_name",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "array",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "task_data",
+        "outputResultsCount": 1,
+        "x": 480,
+        "y": 40,
+        "wires": [
+            [
+                "7c0f6d6d708eff15"
+            ]
+        ]
+    },
+    {
+        "id": "63c79fec965e90dd",
+        "type": "inject",
+        "z": "6259de69a30e1a43",
+        "name": "手动触发",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 80,
+        "y": 260,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e9a9e4119d1f762b",
+        "type": "ha-get-entities",
+        "z": "6259de69a30e1a43",
+        "name": "获取打印进度",
+        "server": "f1ac778c9ae87c9e",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "is",
+                "value": "sensor.YOUR_PRINTER_ID_print_progress",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "array",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "progress",
+        "outputResultsCount": 1,
+        "x": 480,
+        "y": 120,
+        "wires": [
+            [
+                "7c0f6d6d708eff15"
+            ]
+        ]
+    },
+    {
+        "id": "9177524d8e51fd56",
+        "type": "api-current-state",
+        "z": "6259de69a30e1a43",
+        "name": "获取ams1料盘id",
+        "server": "f1ac778c9ae87c9e",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "sensor.ams_slot_1",
+        "state_type": "str",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "ams_data",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "topic",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "triggerId"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 480,
+        "y": 240,
+        "wires": [
+            [
+                "bf3dd535dba3fa6a"
+            ]
+        ]
+    },
+    {
+        "id": "4f9804984cd887e1",
+        "type": "api-current-state",
+        "z": "6259de69a30e1a43",
+        "name": "获取ams2料盘id",
+        "server": "f1ac778c9ae87c9e",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "sensor.ams_slot_2",
+        "state_type": "str",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "ams_data",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "topic",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "triggerId"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 480,
+        "y": 280,
+        "wires": [
+            [
+                "bf3dd535dba3fa6a"
+            ]
+        ]
+    },
+    {
+        "id": "5193ef4d64022474",
+        "type": "api-current-state",
+        "z": "6259de69a30e1a43",
+        "name": "获取ams3料盘id",
+        "server": "f1ac778c9ae87c9e",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "sensor.ams_slot_3",
+        "state_type": "str",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "ams_data",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "topic",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "triggerId"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 480,
+        "y": 320,
+        "wires": [
+            [
+                "bf3dd535dba3fa6a"
+            ]
+        ]
+    },
+    {
+        "id": "735bb3d24e663b47",
+        "type": "api-current-state",
+        "z": "6259de69a30e1a43",
+        "name": "获取ams4料盘id",
+        "server": "f1ac778c9ae87c9e",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "sensor.ams_slot_4",
+        "state_type": "str",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "ams_data",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "topic",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "triggerId"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 480,
+        "y": 360,
+        "wires": [
+            [
+                "bf3dd535dba3fa6a"
+            ]
+        ]
+    },
+    {
+        "id": "ea3669701d6db75a",
+        "type": "http request",
+        "z": "6259de69a30e1a43",
+        "name": "调用 Spoolman API",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1450,
+        "y": 180,
+        "wires": [
+            [
+                "9bc7d919238f266e"
+            ]
+        ]
+    },
+    {
+        "id": "bf3dd535dba3fa6a",
+        "type": "join",
+        "z": "6259de69a30e1a43",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "ams_data",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": false,
+        "accumulate": false,
+        "timeout": "",
+        "count": "4",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 670,
+        "y": 280,
+        "wires": [
+            [
+                "7c0f6d6d708eff15"
+            ]
+        ]
+    },
+    {
+        "id": "c266a1aba9ee4a85",
+        "type": "split",
+        "z": "6259de69a30e1a43",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "spoolman_requests",
+        "x": 1110,
+        "y": 180,
+        "wires": [
+            [
+                "9b3b657bd678f834"
+            ]
+        ]
+    },
+    {
+        "id": "9bc7d919238f266e",
+        "type": "join",
+        "z": "6259de69a30e1a43",
+        "name": "",
+        "mode": "custom",
+        "build": "array",
+        "property": "",
+        "propertyType": "full",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": false,
+        "accumulate": false,
+        "timeout": "",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1610,
+        "y": 180,
+        "wires": [
+            [
+                "35134dd3eef8c664"
+            ]
+        ]
+    },
+    {
+        "id": "9b3b657bd678f834",
+        "type": "function",
+        "z": "6259de69a30e1a43",
+        "name": "准备请求",
+        "func": "// --- 1. 提取请求数据 ---\nvar req = msg.spoolman_requests; \n\n// --- 2. 提升属性 ---\nmsg.url = req.url;\nmsg.payload = req.payload;\nmsg.method = req.method;\nmsg.headers = req.headers;\n\n// --- 3. 传递辅助数据 ---\nmsg.task_name_from_ha = req.task_name_from_ha;\nmsg.used_weight_from_printer = req.used_weight_from_printer;\nmsg.spool_id_from_ha = req.spool_id_from_ha;\nmsg.type = req.type;\nmsg.ams_slot_name = req.ams_slot_name;\n\n// --- 4. 计数器与 Join 逻辑 ---\nvar batchId = msg.batch_id; \nvar totalRequests = msg.total_requests;\nvar countKey = \"counter_\" + batchId;\nvar count = flow.get(countKey) || 0;\ncount++;\n\n// 检查是否为最后一包数据\nif (count === totalRequests) {\n    // 是最后一包：设置 complete 标志\n    msg.complete = true;\n    // 清理 flow 变量\n    flow.set(countKey, undefined); \n} else {\n    // 不是最后一包：更新计数器\n    flow.set(countKey, count);\n}\n\n// --- 5. 返回处理后的消息 ---\n// node.warn(\"准备 API 请求 发送: \" + JSON.stringify(msg, null, 2));\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1260,
+        "y": 180,
+        "wires": [
+            [
+                "ea3669701d6db75a"
+            ]
+        ]
+    },
+    {
+        "id": "0714889058f90790",
+        "type": "inject",
+        "z": "6259de69a30e1a43",
+        "name": "手动触发更新",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "10",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 1140,
+        "wires": [
+            [
+                "fbff0f4cc02e3175"
+            ]
+        ]
+    },
+    {
+        "id": "899e6c1f0e25a0c5",
+        "type": "function",
+        "z": "6259de69a30e1a43",
+        "name": "合并并存储耗材列表",
+        "func": "const SPOOLMAN_FIELD_KEY = \"bambu_filament_id\";\nconst SPOOLMAN_NICE_NAME = \"配置拓竹耗材\";\n\nconst filamentData = msg.ha_data;\n\nif (typeof filamentData !== 'object' || filamentData === null || Object.keys(filamentData).length === 0) {\n    node.error(\"未从 HA (msg.ha_data) 接收到有效的耗材数据\", msg);\n    return null;\n}\n\nconst haFilamentNames = new Set(); \nconst nameToIdMap = {};\n\nfor (const id in filamentData) {\n    if (Object.prototype.hasOwnProperty.call(filamentData, id)) {\n        const filament = filamentData[id];\n        if (filament && filament.name) {\n            const name = filament.name;\n            haFilamentNames.add(name);\n            nameToIdMap[name] = id;\n        }\n    }\n}\n\n\nif (haFilamentNames.size > 0) {\n    global.set(\"bambuName_to_ID_Map\", nameToIdMap);\n    node.log(`成功存储 ${haFilamentNames.size} 个HA耗材映射到全局变量 bambuName_to_ID_Map`);\n} else {\n    node.warn(\"没有从HA处理任何耗材数据。\");\n}\n\nconst spoolmanFields = msg.payload;\nlet existingSpoolmanChoices = new Set(); \n\nif (Array.isArray(spoolmanFields)) {\n    const field = spoolmanFields.find(f => f.key === SPOOLMAN_FIELD_KEY);\n    \n    if (field && field.choices && Array.isArray(field.choices)) {\n        field.choices.forEach(choice => existingSpoolmanChoices.add(choice));\n        node.log(`在 Spoolman 中为字段 '${SPOOLMAN_FIELD_KEY}' 找到了 ${existingSpoolmanChoices.size} 个现有选项`);\n    } else {\n        node.log(`未找到 Spoolman 字段 '${SPOOLMAN_FIELD_KEY}' 或该字段没有 'choices'。`);\n    }\n} else {\n    node.warn(\"来自 Spoolman (GET /field/filament) 的响应不是一个数组。无法合并选项。\");\n}\n\nhaFilamentNames.forEach(name => {\n    existingSpoolmanChoices.add(name);\n});\n\nconst combinedFilamentNames = Array.from(existingSpoolmanChoices);\ncombinedFilamentNames.sort();\n\nif (combinedFilamentNames.length === 0) {\n    node.error(\"合并后的选项列表为空，流程中止。\", msg);\n    return null;\n}\n\nmsg.payload = {\n    \"name\": SPOOLMAN_NICE_NAME,\n    \"field_type\": \"choice\",\n    \"choices\": combinedFilamentNames,\n    \"multi_choice\": false\n};\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 160,
+        "y": 1240,
+        "wires": [
+            [
+                "6f9321998dc37fb3"
+            ]
+        ]
+    },
+    {
+        "id": "6f9321998dc37fb3",
+        "type": "http request",
+        "z": "6259de69a30e1a43",
+        "name": "POST Spoolman API",
+        "method": "POST",
+        "ret": "json",
+        "paytoqs": "ignore",
+        "url": "http://YOUR_SPOOLMAN_IP:PORT/api/v1/field/filament/bambu_filament_id",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "basic",
+        "senderr": false,
+        "headers": [],
+        "x": 400,
+        "y": 1240,
+        "wires": [
+            [
+                "fee706145b305e5a"
+            ]
+        ]
+    },
+    {
+        "id": "fee706145b305e5a",
+        "type": "debug",
+        "z": "6259de69a30e1a43",
+        "name": "API 响应",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 600,
+        "y": 1240,
+        "wires": []
+    },
+    {
+        "id": "fbff0f4cc02e3175",
+        "type": "api-call-service",
+        "z": "6259de69a30e1a43",
+        "name": "读取耗材列表",
+        "server": "f1ac778c9ae87c9e",
+        "version": 7,
+        "debugenabled": false,
+        "action": "bambu_lab.get_filament_data",
+        "floorId": [],
+        "areaId": [],
+        "deviceId": [
+            "YOUR_HA_DEVICE_ID"
+        ],
+        "entityId": [],
+        "labelId": [],
+        "data": "",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "results"
+            }
+        ],
+        "queue": "none",
+        "blockInputOverrides": true,
+        "domain": "bambu_lab",
+        "service": "get_filament_data",
+        "x": 300,
+        "y": 1140,
+        "wires": [
+            [
+                "6d7e826782f50f7b"
+            ]
+        ]
+    },
+    {
+        "id": "6d7e826782f50f7b",
+        "type": "change",
+        "z": "6259de69a30e1a43",
+        "name": "存储HA数据",
+        "rules": [
+            {
+                "t": "set",
+                "p": "ha_data",
+                "pt": "msg",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 490,
+        "y": 1140,
+        "wires": [
+            [
+                "2f14c918886c0d44"
+            ]
+        ]
+    },
+    {
+        "id": "2f14c918886c0d44",
+        "type": "http request",
+        "z": "6259de69a30e1a43",
+        "name": "GET Spoolman Fields",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://YOUR_SPOOLMAN_IP:PORT/api/v1/field/filament",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "basic",
+        "senderr": false,
+        "headers": [],
+        "x": 700,
+        "y": 1140,
+        "wires": [
+            [
+                "899e6c1f0e25a0c5"
+            ]
+        ]
+    },
+    {
+        "id": "68baa70bd4b5bee6",
+        "type": "delay",
+        "z": "6259de69a30e1a43",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "2",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "2",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1300,
+        "y": 540,
+        "wires": [
+            [
+                "10be69f51b509af1"
+            ]
+        ]
+    },
+    {
+        "id": "8dfad0d00af082d7",
+        "type": "api-current-state",
+        "z": "6259de69a30e1a43",
+        "name": "获取ams1料盘id",
+        "server": "f1ac778c9ae87c9e",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "sensor.ams_slot_1",
+        "state_type": "str",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "topic",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "triggerId"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 460,
+        "y": 800,
+        "wires": [
+            [
+                "b9b532ca65e736a5"
+            ]
+        ]
+    },
+    {
+        "id": "cead0c9be8d0441d",
+        "type": "api-current-state",
+        "z": "6259de69a30e1a43",
+        "name": "获取ams2料盘id",
+        "server": "f1ac778c9ae87c9e",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "sensor.ams_slot_2",
+        "state_type": "str",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "topic",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "triggerId"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 460,
+        "y": 860,
+        "wires": [
+            [
+                "af6d41dd354c592b"
+            ]
+        ]
+    },
+    {
+        "id": "6fc8b64ec16597d1",
+        "type": "api-current-state",
+        "z": "6259de69a30e1a43",
+        "name": "获取ams3料盘id",
+        "server": "f1ac778c9ae87c9e",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "sensor.ams_slot_3",
+        "state_type": "str",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "topic",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "triggerId"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 460,
+        "y": 920,
+        "wires": [
+            [
+                "68b8be9b34606d1a"
+            ]
+        ]
+    },
+    {
+        "id": "946ba9332d1f9c9b",
+        "type": "api-current-state",
+        "z": "6259de69a30e1a43",
+        "name": "获取ams4料盘id",
+        "server": "f1ac778c9ae87c9e",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "sensor.ams_slot_4",
+        "state_type": "str",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "topic",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "triggerId"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 460,
+        "y": 980,
+        "wires": [
+            [
+                "34470f313d6bb37b"
+            ]
+        ]
+    },
+    {
+        "id": "35134dd3eef8c664",
+        "type": "function",
+        "z": "6259de69a30e1a43",
+        "name": "构建通用通知内容",
+        "func": "// --- 0. 调试：打印 Join 节点聚合后的消息 ---\nnode.warn(\"节点2 (准备通用通知) 收到: \" + JSON.stringify(msg, null, 2));\n\n// --- 1. 提取数据 ---\nvar responses = msg.payload;\n\n// --- 2. 安全检查 ---\nif (!Array.isArray(responses) || responses.length === 0) {\n    node.warn(\"收到的 spoolman_responses 无效或为空数组。\");\n    return null;\n}\n\n// --- 3. 准备通知内容 ---\nvar notification_lines = [];\nvar BeijingTime = new Date().toLocaleString(\"zh-CN\", { timeZone: \"Asia/Shanghai\", hour12: false });\nvar timestamp = BeijingTime.replace(/\\//g, '-'); // 格式化时间戳\n\n// 从第一个响应中获取任务名称（它们都一样）\nvar taskName = responses[0].task_name_from_ha || \"未知任务\";\nvar title = \"🖨️ 打印完成 - 耗材更新\";\n\nnotification_lines.push(title);\nnotification_lines.push(\"打印任务: \" + taskName);\n\n// --- 4. 遍历所有 Spoolman 响应 ---\nfor (var i = 0; i < responses.length; i++) {\n    var responseMsg = responses[i];\n    \n    // 从每个响应对象中提取辅助数据\n    var spoolObject = responseMsg.payload.payload;\n    \n    if (!spoolObject || typeof spoolObject !== 'object' || !spoolObject.id) {\n        spoolObject = responseMsg.payload; \n    }\n    \n    var usedWeight = responseMsg.used_weight_from_printer;\n    var spoolId = responseMsg.spool_id_from_ha;\n    var type = responseMsg.type;\n    var amsSlotName = responseMsg.ams_slot_name; \n\n    // 安全检查\n    if (!spoolObject || typeof spoolObject !== 'object' || !spoolObject.id) {\n        node.warn(\"第 \" + i + \" 个 Spoolman 响应无效。 响应: \" + JSON.stringify(spoolObject));\n        continue;\n    }\n\n    // --- 5. 提取每个料盘的详细信息 ---\n    var remainingWeight = spoolObject.remaining_weight;\n    var remainingWeightStr = \"N/A\";\n    if (typeof remainingWeight === 'number') {\n        remainingWeightStr = remainingWeight.toFixed(2) + \"g\";\n    }\n\n    var usedWeightStr = \"N/A\";\n    if (typeof usedWeight === 'number') {\n        usedWeightStr = usedWeight.toFixed(2) + \"g\";\n    }\n\n    var filamentName = \"未知耗材\";\n    if (spoolObject.filament) {\n        var f = spoolObject.filament;\n        var parts = [];\n        if (f.vendor && f.vendor.name && f.vendor.name.trim() !== \"\") {\n            parts.push(f.vendor.name.trim());\n        }\n        if (f.name && f.name.trim() !== \"\") {\n            parts.push(f.name.trim());\n        }\n        if (f.material && f.material.trim() !== \"\") {\n            parts.push(\"(\" + f.material.trim() + \")\");\n        }\n        if (parts.length > 0) {\n            filamentName = parts.join(\" \");\n        }\n    }\n    \n    // --- 6. 构建此料盘的通知行 ---\n    if (type === 'ams') {\n        notification_lines.push(\"--- \" + amsSlotName + \" (ID: #\" + spoolId + \") ---\");\n    } else if (type === 'external') {\n        notification_lines.push(\"--- 外挂料盘 (ID: #\" + spoolId + \") ---\");\n    } else {\n         notification_lines.push(\"--- 未知料盘 (ID: #\" + spoolId + \") ---\");\n    }\n    \n    notification_lines.push(\"耗材名称: \" + filamentName);\n    notification_lines.push(\"本次消耗: \" + usedWeightStr);\n    notification_lines.push(\"剩余重量: \" + remainingWeightStr);\n}\n\n// --- 7. 添加时间戳并合并 ---\nnotification_lines.push(\"---\");\nnotification_lines.push(\"时间: \" + timestamp);\n\nvar full_text_body = notification_lines.join(\"\\n\");\n\n// --- 8. 准备通用输出 ---\n\n// 移除之前 http-request 留下的属性\ndelete msg.headers;\ndelete msg.statusCode;\ndelete msg.response;\ndelete msg.payload;\n\n// 设置通用属性\nmsg.title = title; // 标题\nmsg.payload = full_text_body; // 完整内容 (Synochat, Bark)\nmsg.desp = full_text_body;    // Server酱使用 'desp'\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1810,
+        "y": 180,
+        "wires": [
+            [
+                "457f327c7a86dda0"
+            ]
+        ]
+    },
+    {
+        "id": "ceefe1aec22f120c",
+        "type": "http request",
+        "z": "6259de69a30e1a43",
+        "name": "发送synochat通知",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 2290,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "457f327c7a86dda0",
+        "type": "function",
+        "z": "6259de69a30e1a43",
+        "name": "准备Synochat",
+        "func": "var text = msg.payload; \nvar newMsg = {};\nvar innerJson = { \"text\": text };\nvar jsonString = JSON.stringify(innerJson);\n// 请修改通知URL\nnewMsg.url = \"YOUR_SYNOCHAT_URL\"\nnewMsg.payload = \"payload=\" + encodeURIComponent(jsonString);\nnewMsg.headers = {\n    'Content-Type': 'application/x-www-form-urlencoded'\n};\nreturn newMsg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2080,
+        "y": 80,
+        "wires": [
+            [
+                "ceefe1aec22f120c"
+            ]
+        ]
+    },
+    {
+        "id": "e57f5469fdf941a4",
+        "type": "function",
+        "z": "6259de69a30e1a43",
+        "name": "准备Bark",
+        "func": "var newMsg = {};\n// https://YOUR_BARK_SERVER/YOUR_BARK_KEY/\n// ############ 修改这里 ############\nvar barkKey = \"YOUR_BARK_KEY\"; \nvar baseUrl = \"YOUR_BARK_SERVER\"\n// ################################\n\nnewMsg.url = \"https://\" + baseUrl + \"/\" + barkKey;\nnewMsg.method = \"POST\";\nnewMsg.headers = {\n    \"Content-Type\": \"application/json\"\n};\nnewMsg.payload = {\n    \"title\": msg.title,\n    \"body\": msg.payload,\n    \"icon\": \"https://raw.githubusercontent.com/Gil-777/Bambu-Node-Red/main/resources/3d-printer.png\",\n    \"group\": \"3DPrint\"\n};\n\nreturn newMsg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2060,
+        "y": 180,
+        "wires": [
+            [
+                "b0c21b9ff72c88d6"
+            ]
+        ]
+    },
+    {
+        "id": "b0c21b9ff72c88d6",
+        "type": "http request",
+        "z": "6259de69a30e1a43",
+        "name": "发送Bark通知",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 2300,
+        "y": 180,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "af6550e1445fd897",
+        "type": "function",
+        "z": "6259de69a30e1a43",
+        "name": "准备Server酱",
+        "func": "var newMsg = {};\n\n// ############ 修改这里 ############\nvar sctKey = \"YOUR_SERVERCHAN_KEY\"; \n// ################################\n\nnewMsg.url = \"https://sctapi.ftqq.com/\" + sctKey + \".send\";\nnewMsg.method = \"POST\";\nnewMsg.headers = {\n    \"Content-Type\": \"application/x-www-form-urlencoded\"\n};\n\nvar title = encodeURIComponent(msg.title);\nvar desp = encodeURIComponent(msg.desp);\n\nnewMsg.payload = \"title=\" + title + \"&desp=\" + desp;\n\nreturn newMsg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2070,
+        "y": 280,
+        "wires": [
+            [
+                "465993632a1d9f19"
+            ]
+        ]
+    },
+    {
+        "id": "465993632a1d9f19",
+        "type": "http request",
+        "z": "6259de69a30e1a43",
+        "name": "发送Server酱通知",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 2290,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a71069982cf3b5bc",
+        "type": "comment",
+        "z": "6259de69a30e1a43",
+        "name": "通知方式 (可多选，按需连线)",
+        "info": "",
+        "x": 1800,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "e930b045495f67dc",
+        "type": "comment",
+        "z": "6259de69a30e1a43",
+        "name": "Server酱请前往 https://sct.ftqq.com/ 配置通道",
+        "info": "",
+        "x": 2150,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "9318b82dbab013cb",
+        "type": "delay",
+        "z": "6259de69a30e1a43",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "3",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "10",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 280,
+        "y": 800,
+        "wires": [
+            [
+                "8dfad0d00af082d7"
+            ]
+        ]
+    },
+    {
+        "id": "055eaebe15dd9071",
+        "type": "delay",
+        "z": "6259de69a30e1a43",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "3",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "10",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 280,
+        "y": 860,
+        "wires": [
+            [
+                "cead0c9be8d0441d"
+            ]
+        ]
+    },
+    {
+        "id": "4e33d04d372ae3c1",
+        "type": "delay",
+        "z": "6259de69a30e1a43",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "3",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "10",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 280,
+        "y": 920,
+        "wires": [
+            [
+                "6fc8b64ec16597d1"
+            ]
+        ]
+    },
+    {
+        "id": "46f0445d19f94c3e",
+        "type": "delay",
+        "z": "6259de69a30e1a43",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "3",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "10",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 280,
+        "y": 980,
+        "wires": [
+            [
+                "946ba9332d1f9c9b"
+            ]
+        ]
+    },
+    {
+        "id": "97e8bc7c8bd1047b",
+        "type": "trigger-state",
+        "z": "6259de69a30e1a43",
+        "name": "监测ams槽位2状态",
+        "server": "f1ac778c9ae87c9e",
+        "version": 5,
+        "inputs": 0,
+        "outputs": 2,
+        "exposeAsEntityConfig": "",
+        "entities": {
+            "entity": [
+                "sensor.YOUR_PRINTER_AMS_ID_tray_2"
+            ],
+            "substring": [],
+            "regex": []
+        },
+        "debugEnabled": false,
+        "constraints": [
+            {
+                "targetType": "this_entity",
+                "targetValue": "",
+                "propertyType": "previous_state",
+                "propertyValue": "old_state.state",
+                "comparatorType": "is",
+                "comparatorValueDatatype": "str",
+                "comparatorValue": "Empty"
+            },
+            {
+                "targetType": "this_entity",
+                "targetValue": "",
+                "propertyType": "current_state",
+                "propertyValue": "new_state.state",
+                "comparatorType": "is_not",
+                "comparatorValueDatatype": "str",
+                "comparatorValue": "Empty"
+            }
+        ],
+        "customOutputs": [],
+        "outputInitially": false,
+        "stateType": "str",
+        "enableInput": false,
+        "x": 90,
+        "y": 860,
+        "wires": [
+            [
+                "055eaebe15dd9071"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "42432efc901f5b44",
+        "type": "trigger-state",
+        "z": "6259de69a30e1a43",
+        "name": "监测ams槽位1状态",
+        "server": "f1ac778c9ae87c9e",
+        "version": 5,
+        "inputs": 0,
+        "outputs": 2,
+        "exposeAsEntityConfig": "",
+        "entities": {
+            "entity": [
+                "sensor.YOUR_PRINTER_AMS_ID_tray_1"
+            ],
+            "substring": [],
+            "regex": []
+        },
+        "debugEnabled": false,
+        "constraints": [
+            {
+                "targetType": "this_entity",
+                "targetValue": "",
+                "propertyType": "previous_state",
+                "propertyValue": "old_state.state",
+                "comparatorType": "is",
+                "comparatorValueDatatype": "str",
+                "comparatorValue": "Empty"
+            },
+            {
+                "targetType": "this_entity",
+                "targetValue": "",
+                "propertyType": "current_state",
+                "propertyValue": "new_state.state",
+                "comparatorType": "is_not",
+                "comparatorValueDatatype": "str",
+                "comparatorValue": "Empty"
+            }
+        ],
+        "customOutputs": [],
+        "outputInitially": false,
+        "stateType": "str",
+        "enableInput": false,
+        "x": 90,
+        "y": 800,
+        "wires": [
+            [
+                "9318b82dbab013cb"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "5524e6421b8e1c07",
+        "type": "trigger-state",
+        "z": "6259de69a30e1a43",
+        "name": "监测ams槽位3状态",
+        "server": "f1ac778c9ae87c9e",
+        "version": 5,
+        "inputs": 0,
+        "outputs": 2,
+        "exposeAsEntityConfig": "",
+        "entities": {
+            "entity": [
+                "sensor.YOUR_PRINTER_AMS_ID_tray_3"
+            ],
+            "substring": [],
+            "regex": []
+        },
+        "debugEnabled": false,
+        "constraints": [
+            {
+                "targetType": "this_entity",
+                "targetValue": "",
+                "propertyType": "previous_state",
+                "propertyValue": "old_state.state",
+                "comparatorType": "is",
+                "comparatorValueDatatype": "str",
+                "comparatorValue": "Empty"
+            },
+            {
+                "targetType": "this_entity",
+                "targetValue": "",
+                "propertyType": "current_state",
+                "propertyValue": "new_state.state",
+                "comparatorType": "is_not",
+                "comparatorValueDatatype": "str",
+                "comparatorValue": "Empty"
+            }
+        ],
+        "customOutputs": [],
+        "outputInitially": false,
+        "stateType": "str",
+        "enableInput": false,
+        "x": 90,
+        "y": 920,
+        "wires": [
+            [
+                "4e33d04d372ae3c1"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "1c8280d744be27c5",
+        "type": "trigger-state",
+        "z": "6259de69a30e1a43",
+        "name": "监测ams槽位4状态",
+        "server": "f1ac778c9ae87c9e",
+        "version": 5,
+        "inputs": 0,
+        "outputs": 2,
+        "exposeAsEntityConfig": "",
+        "entities": {
+            "entity": [
+                "sensor.YOUR_PRINTER_AMS_ID_tray_4"
+            ],
+            "substring": [],
+            "regex": []
+        },
+        "debugEnabled": false,
+        "constraints": [
+            {
+                "targetType": "this_entity",
+                "targetValue": "",
+                "propertyType": "previous_state",
+                "propertyValue": "old_state.state",
+                "comparatorType": "is",
+                "comparatorValueDatatype": "str",
+                "comparatorValue": "Empty"
+            },
+            {
+                "targetType": "this_entity",
+                "targetValue": "",
+                "propertyType": "current_state",
+                "propertyValue": "new_state.state",
+                "comparatorType": "is_not",
+                "comparatorValueDatatype": "str",
+                "comparatorValue": "Empty"
+            }
+        ],
+        "customOutputs": [],
+        "outputInitially": false,
+        "stateType": "str",
+        "enableInput": false,
+        "x": 90,
+        "y": 980,
+        "wires": [
+            [
+                "46f0445d19f94c3e"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "f1ac778c9ae87c9e",
+        "type": "server",
+        "name": "ha",
+        "version": 5,
+        "addon": false,
+        "rejectUnauthorizedCerts": false,
+        "ha_boolean": "y|yes|true|on|home|open",
+        "connectionDelay": true,
+        "cacheJson": true,
+        "heartbeat": true,
+        "heartbeatInterval": 30,
+        "areaSelector": "friendlyName",
+        "deviceSelector": "friendlyName",
+        "entitySelector": "friendlyName",
+        "statusSeparator": ": ",
+        "statusYear": "hidden",
+        "statusMonth": "short",
+        "statusDay": "numeric",
+        "statusHourCycle": "default",
+        "statusTimeFormat": "h:m",
+        "enableGlobalContextStore": true
+    },
+    {
+        "id": "f66183e85000894c",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-contrib-home-assistant-websocket": "0.78.2"
+        }
+    }
+]

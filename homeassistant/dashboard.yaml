@@ -1,0 +1,1213 @@
+views:
+  - title: Bambu Lab
+    sections:
+      - type: grid
+        cards:
+          - type: picture-elements
+            elements:
+              - type: conditional
+                conditions:
+                  - entity: sensor.YOUR_PRINTER_ID_print_status
+                    state_not: offline
+                elements:
+                  - type: custom:config-template-card
+                    entities:
+                      - sensor.YOUR_PRINTER_ID_wi_fi_signal
+                    element:
+                      type: state-icon
+                      entity: sensor.YOUR_PRINTER_ID_wi_fi_signal
+                      icon: >-
+                        ${states['sensor.YOUR_PRINTER_ID_wi_fi_signal'].state
+                        > -50 ? 'mdi:wifi-strength-4' :
+                          states['sensor.YOUR_PRINTER_ID_wi_fi_signal'].state > -60 ?
+                        'mdi:wifi-strength-3' :
+                          states['sensor.YOUR_PRINTER_ID_wi_fi_signal'].state > -67 ?
+                        'mdi:wifi-strength-2' :
+                          states['sensor.YOUR_PRINTER_ID_wi_fi_signal'].state > -70 ?
+                        'mdi:wifi-strength-1-alert' :
+                        'mdi:wifi-strength-outline'}
+                    style:
+                      left: 76%
+                      top: 27.7%
+                      font-size: 0.8em
+                      color: rgba(0,0,0,0)
+                      '--paper-item-icon-color': >-
+                        ${states['sensor.YOUR_PRINTER_ID_wi_fi_signal'].state
+                        > -50 ? 'green' :
+                          states['sensor.YOUR_PRINTER_ID_wi_fi_signal'].state > -60 ?
+                        'yellow' :
+                          states['sensor.YOUR_PRINTER_ID_wi_fi_signal'].state > -67 ?
+                        'orange' :
+                          states['sensor.YOUR_PRINTER_ID_wi_fi_signal'].state > -70 ?
+                        'red' : 'red'}
+                  - entity: light.YOUR_PRINTER_ID_chamber_light
+                    type: state-icon
+                    style:
+                      top: 45%
+                      left: 89%
+                      '--mdc-icon-size': 2.6em
+                    tap_action:
+                      action: toggle
+                  - entity: sensor.YOUR_PRINTER_ID_print_status
+                    type: state-label
+                    style:
+                      top: 82.5%
+                      left: 78.8%
+                      font-size: 0.75em
+                      color: '#FFFFFF'
+                  - type: conditional
+                    conditions:
+                      - entity: sensor.YOUR_PRINTER_ID_print_status
+                        state:
+                          - running
+                          - pause
+                    elements:
+                      - type: conditional
+                        conditions:
+                          - entity: image.YOUR_PRINTER_ID_cover_image
+                            state_not: unavailable
+                        elements:
+                          - type: custom:hui-element
+                            card_type: picture-entity
+                            show_name: false
+                            show_state: false
+                            entity: image.YOUR_PRINTER_ID_cover_image
+                            style:
+                              top: 61.5%
+                              left: 47%
+                              transform: translate(-45%, -40%) scale(75%, 75%)
+                              '--ha-card-border-width': 0px
+                              '--ha-card-background': none
+                      - entity: sensor.YOUR_PRINTER_ID_print_progress
+                        type: state-badge
+                        tap_action:
+                          action: none
+                        style:
+                          top: 18.5%
+                          left: 74%
+                          font-size: 1em
+                          color: rgba(0,0,0,0)
+                          '--label-badge-red': '#11739D'
+                  - entity: sensor.YOUR_PRINTER_ID_nozzle_temperature
+                    type: state-badge
+                    style:
+                      top: 35%
+                      left: 46.5%
+                      font-size: 0.8em
+                      color: rgba(0,0,0,0)
+                  - entity: sensor.YOUR_PRINTER_ID_bed_temperature
+                    type: state-badge
+                    style:
+                      top: 95%
+                      left: 46.5%
+                      font-size: 0.8em
+                      color: rgba(0,0,0,0)
+            card_mod:
+              style: |
+                ha-card {
+                  background: none !important;
+                  border: none !important; 
+                  box-shadow: none !important;
+                }
+            image: /local/media/bambuprinter/a1_lightoff.png
+            entity: light.YOUR_PRINTER_ID_chamber_light
+            state_image:
+              unavailable: /local/media/bambuprinter/a1_lightoff.png
+              'on': /local/media/bambuprinter/a1_lighton.png
+              'off': /local/media/bambuprinter/a1_lightoff.png
+          - type: vertical-stack
+            cards:
+              - type: custom:button-card
+                entity: switch.remove_me
+                name: 设备控制
+                icon: mdi:printer-3d
+                show_icon: true
+                show_state: false
+                layout: icon_name
+                tap_action:
+                  action: |
+                    [[[
+                      if (entity) return 'toggle';
+                      else return 'none';
+                    ]]]
+                confirmation:
+                  text: Toggle Printer Power?
+                state:
+                  - value: 'on'
+                    icon: mdi:power
+                    color: green
+                  - value: 'off'
+                    icon: mdi:power
+                    color: grey
+                styles:
+                  grid:
+                    - grid-template-columns: |
+                        [[[
+                          if (entity) return '20% 1fr 20%';
+                          else return '20% 1fr 20%';
+                        ]]]
+                  icon:
+                    - width: |
+                        [[[
+                          if (entity) return '65px';
+                          else return '0px';
+                        ]]]
+                    - padding-left: 20px
+                  name:
+                    - text-wrap: balance
+                    - font-size: 1.4em
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: rgba(0,0,0,0);
+                      border: none;
+                      box-shadow: none !important;
+                    }
+              - type: custom:gap-card
+                height: 5
+              - type: custom:hui-element
+                card_type: horizontal-stack
+                cards:
+                  - type: custom:hui-element
+                    card_type: button
+                    entity: select.YOUR_PRINTER_ID_printing_speed
+                    name: 静音模式
+                    icon: mdi:speedometer-slow
+                    tap_action:
+                      action: call-service
+                      service: select.select_option
+                      data:
+                        option: silent
+                      target:
+                        entity_id: select.YOUR_PRINTER_ID_printing_speed
+                    card_mod:
+                      style: |
+                        ha-card {
+                          box-shadow: none !important;
+                          background-color: rgba(0,0,0,0);
+                          border: none;
+                          --pbs-button-color: {% if is_state('select.YOUR_PRINTER_ID_printing_speed', 'Silent') or is_state('select.YOUR_PRINTER_ID_printing_speed', 'silent') %} yellow; {% else %} grey; {% endif %}
+                          --paper-item-icon-color: {% if is_state('select.YOUR_PRINTER_ID_printing_speed', 'Silent') or is_state('select.YOUR_PRINTER_ID_printing_speed', 'silent') %} yellow; {% else %} grey; {% endif %}
+                        }
+                  - type: custom:hui-element
+                    card_type: button
+                    entity: select.YOUR_PRINTER_ID_printing_speed
+                    name: 标准模式
+                    icon: mdi:speedometer-medium
+                    tap_action:
+                      action: call-service
+                      service: select.select_option
+                      data:
+                        option: standard
+                      target:
+                        entity_id: select.YOUR_PRINTER_ID_printing_speed
+                    card_mod:
+                      style: |
+                        ha-card {
+                          box-shadow: none !important;
+                          background-color: rgba(0,0,0,0);
+                          border: none;
+                          --paper-item-icon-color: {% if is_state('select.YOUR_PRINTER_ID_printing_speed', 'Standard') or is_state('select.YOUR_PRINTER_ID_printing_speed', 'standard') %} yellow; {% else %} grey; {% endif %}
+                        }
+                  - type: custom:hui-element
+                    card_type: button
+                    entity: select.YOUR_PRINTER_ID_printing_speed
+                    name: 运动模式
+                    icon: mdi:speedometer
+                    tap_action:
+                      action: call-service
+                      service: select.select_option
+                      data:
+                        option: sport
+                      target:
+                        entity_id: select.YOUR_PRINTER_ID_printing_speed
+                    card_mod:
+                      style: |
+                        ha-card {
+                          box-shadow: none !important;
+                          background-color: rgba(0,0,0,0);
+                          border: none;
+                          --paper-item-icon-color: {% if is_state('select.YOUR_PRINTER_ID_printing_speed', 'Sport') or is_state('select.YOUR_PRINTER_ID_printing_speed', 'sport') %} yellow; {% else %} grey; {% endif %}
+                        }
+                  - type: custom:hui-element
+                    card_type: button
+                    entity: select.YOUR_PRINTER_ID_printing_speed
+                    name: 狂暴模式
+                    icon: mdi:speedometer
+                    tap_action:
+                      action: call-service
+                      service: select.select_option
+                      data:
+                        option: ludicrous
+                      target:
+                        entity_id: select.YOUR_PRINTER_ID_printing_speed
+                    card_mod:
+                      style: |
+                        ha-card {
+                          box-shadow: none !important;
+                          background-color: rgba(0,0,0,0);
+                          border: none;
+                          --paper-item-icon-color: {% if is_state('select.YOUR_PRINTER_ID_printing_speed', 'Ludicrous') or is_state('select.YOUR_PRINTER_ID_printing_speed', 'ludicrous') %} yellow; {% else %} grey; {% endif %}
+                        }
+              - type: custom:gap-card
+                height: 5
+              - type: custom:hui-element
+                card_type: horizontal-stack
+                cards:
+                  - type: custom:button-card
+                    variables:
+                      pause_entity: button.YOUR_PRINTER_ID_pause_printing
+                      start_entity: button.YOUR_PRINTER_ID_resume_printing
+                    entity: sensor.YOUR_PRINTER_ID_print_status
+                    name: >
+                      [[[  if (entity.state.toUpperCase() == 'RUNNING') return
+                      "暂停";
+                       else if (entity.state.toUpperCase() == 'PAUSE') return "继续";
+                      else return '';  ]]]
+                    state:
+                      - value: RUNNING
+                        icon: mdi:pause
+                        color: orange
+                      - value: running
+                        icon: mdi:pause
+                        color: orange
+                      - value: PAUSE
+                        icon: mdi:play
+                        color: orange
+                      - value: pause
+                        icon: mdi:play
+                        color: orange
+                      - value: OFFLINE
+                        icon: mdi:void
+                        color: grey
+                      - value: offline
+                        icon: mdi:void
+                        color: grey
+                      - value: IDLE
+                        icon: mdi:void
+                        color: grey
+                      - value: idle
+                        icon: mdi:void
+                        color: grey
+                      - value: FAILED
+                        icon: mdi:void
+                        color: grey
+                      - value: failed
+                        icon: mdi:void
+                        color: grey
+                      - value: FINISH
+                        icon: mdi:void
+                        color: grey
+                      - value: finish
+                        icon: mdi:void
+                        color: grey
+                      - value: PREPARE
+                        icon: mdi:void
+                        color: grey
+                      - value: prepare
+                        icon: mdi:void
+                        color: grey
+                    tap_action:
+                      action: >
+                        [[[ if (entity.state.toUpperCase() == 'RUNNING' ||
+                        entity.state.toUpperCase() == 'PAUSE') return
+                        "call-service"; 
+
+                        else return "none";
+
+                        ]]]
+                      service: button.press
+                      service_data:
+                        entity_id: >
+                          [[[ if
+                          (states['sensor.YOUR_PRINTER_ID_print_status'].state.toUpperCase()
+                          == 'RUNNING') 
+                              return variables.pause_entity; 
+                              if (states['sensor.YOUR_PRINTER_ID_print_status'].state.toUpperCase() == 'PAUSE') 
+                              return variables.start_entity; 
+                            else return "";
+                            ]]]
+                    card_mod:
+                      style: |
+                        ha-card {
+                          box-shadow: none !important;
+                          background-color: rgba(0,0,0,0);
+                          border: none;
+                          --paper-item-icon-color: {% if is_state('sensor.YOUR_PRINTER_ID_print_status', 'RUNNING') or is_state('sensor.YOUR_PRINTER_ID_print_status', 'PAUSE') or is_state('sensor.YOUR_PRINTER_ID_print_status', 'running') or is_state('sensor.YOUR_PRINTER_ID_print_status', 'pause') %} orange; {% else %} grey; {% endif %}    
+                        }
+                  - type: custom:gap-card
+                  - type: custom:button-card
+                    entity: sensor.YOUR_PRINTER_ID_print_status
+                    name: >
+                      [[[  if (entity.state.toUpperCase() == 'RUNNING') return
+                      "取消";
+                       else if (entity.state.toUpperCase() =='PAUSE') return "取消";
+                      else return '';  ]]]
+                    confirmation:
+                      text: 是否取消打印?
+                    state:
+                      - value: RUNNING
+                        icon: mdi:cancel
+                        color: red
+                      - value: running
+                        icon: mdi:cancel
+                        color: red
+                      - value: PAUSE
+                        icon: mdi:cancel
+                        color: red
+                      - value: pause
+                        icon: mdi:cancel
+                        color: red
+                      - value: OFFLINE
+                        icon: mdi:void
+                        color: grey
+                      - value: offline
+                        icon: mdi:void
+                        color: grey
+                      - value: IDLE
+                        icon: mdi:void
+                        color: grey
+                      - value: idle
+                        icon: mdi:void
+                        color: grey
+                      - value: FAILED
+                        icon: mdi:void
+                        color: grey
+                      - value: failed
+                        icon: mdi:void
+                        color: grey
+                      - value: FINISH
+                        icon: mdi:void
+                        color: grey
+                      - value: finish
+                        icon: mdi:void
+                        color: grey
+                      - value: PREPARE
+                        icon: mdi:void
+                        color: grey
+                      - value: prepare
+                        icon: mdi:void
+                        color: grey
+                    tap_action:
+                      action: >
+                        [[[ if (entity.state.toUpperCase() == 'RUNNING' ||
+                        entity.state.toUpperCase() == 'PAUSE') return
+                        "call-service";  else return "none"; ]]]
+                      service: button.press
+                      service_data:
+                        entity_id: button.YOUR_PRINTER_ID_stop_printing
+                    card_mod:
+                      style: |
+                        ha-card {
+                          box-shadow: none !important;
+                          background-color: rgba(0,0,0,0);
+                          border: none;
+                          --paper-item-icon-color: {% if is_state('sensor.YOUR_PRINTER_ID_print_status', 'RUNNING') or is_state('sensor.YOUR_PRINTER_ID_print_status', 'PAUSE') or is_state('sensor.YOUR_PRINTER_ID_print_status', 'running') or is_state('sensor.YOUR_PRINTER_ID_print_status', 'pause') %} red; {% else %} grey; {% endif %}
+                        }
+        column_span: 1
+      - type: grid
+        cards:
+          - show_state: true
+            show_name: true
+            camera_view: live
+            type: picture-entity
+            entity: camera.YOUR_PRINTER_ID_camera
+            camera_image: camera.YOUR_PRINTER_ID_camera
+            name: A1摄像头
+          - type: vertical-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-title-card
+                    title: ''
+                    subtitle: 打印任务详情
+                    alignment: center
+                  - type: custom:mushroom-entity-card
+                    entity: sensor.YOUR_PRINTER_ID_task_name
+                    name: 任务
+                    icon: mdi:clipboard-text
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mushroom-entity-card
+                        entity: sensor.YOUR_PRINTER_ID_print_progress
+                        name: 进度
+                        icon: mdi:progress-helper
+                      - type: custom:mushroom-template-card
+                        primary: 层数
+                        icon_color: var(--rgb-state-entity)
+                        secondary: >-
+                          {{states('sensor.YOUR_PRINTER_ID_current_layer')}}
+                          /
+                          {{states('sensor.YOUR_PRINTER_ID_total_layer_count')}}
+                        icon: mdi:layers
+          - type: custom:mushroom-entity-card
+            entity: sensor.YOUR_PRINTER_ID_remaining_time
+          - type: custom:mushroom-entity-card
+            entity: sensor.YOUR_PRINTER_ID_print_weight
+            name: 任务打印重量
+          - type: vertical-stack
+            cards:
+              - type: conditional
+                card:
+                  type: custom:mushroom-fan-card
+                  entity: fan.YOUR_PRINTER_ID_cooling_fan
+                  name: 冷却风扇
+                  icon_animation: true
+                  show_percentage_control: true
+                  fill_container: false
+                  layout: horizontal
+                conditions:
+                  - condition: state
+                    entity: fan.YOUR_PRINTER_ID_cooling_fan
+                    state_not: unavailable
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: custom:mushroom-entity-card
+            entity: sensor.YOUR_PRINTER_ID_nozzle_type
+            icon: mdi:printer-3d-nozzle
+          - type: custom:mushroom-entity-card
+            entity: sensor.YOUR_PRINTER_ID_nozzle_size
+          - type: custom:mushroom-entity-card
+            entity: sensor.YOUR_PRINTER_ID_nozzle_target_temperature
+            icon: mdi:printer-3d-nozzle-heat
+            icon_color: grey
+          - type: custom:mushroom-entity-card
+            entity: sensor.YOUR_PRINTER_ID_nozzle_temperature
+            name: 喷嘴温度
+            icon_color: grey
+          - type: custom:mushroom-entity-card
+            entity: sensor.YOUR_PRINTER_ID_bed_target_temperature
+            icon_color: blue-grey
+            icon: mdi:checkerboard
+          - type: custom:mushroom-entity-card
+            entity: sensor.YOUR_PRINTER_ID_bed_temperature
+            name: 热床温度
+            icon_color: blue-grey
+            icon: mdi:hydraulic-oil-temperature
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: AMS
+            alignment: center
+          - type: picture-elements
+            elements:
+              - type: conditional
+                conditions:
+                  - condition: state
+                    state_not: unavailable
+                    entity: sensor.YOUR_PRINTER_AMS_ID_id
+                  - condition: state
+                    state_not: unknown
+                    entity: sensor.YOUR_PRINTER_AMS_ID_id
+                elements:
+                  - type: state-label
+                    entity: sensor.YOUR_PRINTER_AMS_ID_id
+                    tap_action:
+                      action: none
+                    style:
+                      top: 77%
+                      left: 9.6%
+                      text-align: center
+                      font-size: 0.8em
+                      background-color: rgba(0,0,0,0)
+                      box-shadow: 0 0 3px 3px rgba(0, 0, 0, 0)
+                      border-radius: 10px
+                      pointer-events: none
+                      color: '#FFFFFF'
+              - type: custom:config-template-card
+                entities:
+                  - sensor.YOUR_PRINTER_AMS_ID_tray_1
+                element:
+                  type: state-icon
+                  entity: sensor.YOUR_PRINTER_AMS_ID_tray_1
+                  icon: >-
+                    ${states['sensor.YOUR_PRINTER_AMS_ID_tray_1'].state.toLowerCase()
+                    != 'empty' ? 'fapro:filament-2' : 'mdi:tray' }
+                style:
+                  top: 28%
+                  left: 21.4%
+                  '--paper-item-icon-color': var(--tray_1_color)
+                  background-color: rgba(0,0,0,0.5)
+                  box-shadow: 0 0 5px 5px var(--tray_1_bg)
+                  border-radius: 50px
+                  '--mdc-icon-size': 2.4em
+              - type: state-label
+                entity: sensor.YOUR_PRINTER_AMS_ID_tray_1
+                attribute: type
+                tap_action:
+                  action: none
+                style:
+                  top: 77%
+                  left: 21%
+                  text-align: center
+                  font-size: 1em
+                  background-color: rgba(0,0,0,0.4)
+                  box-shadow: 0 0 5px 5px rgba(0, 0, 0, 0.4)
+                  border-radius: 50px
+                  pointer-events: none
+                  color: '#FFFFFF'
+              - type: custom:config-template-card
+                entities:
+                  - sensor.YOUR_PRINTER_AMS_ID_tray_2
+                element:
+                  type: state-icon
+                  entity: sensor.YOUR_PRINTER_AMS_ID_tray_2
+                  icon: >-
+                    ${states['sensor.YOUR_PRINTER_AMS_ID_tray_2'].state.toLowerCase()
+                    != 'empty' ? 'fapro:filament-2' : 'mdi:tray' }
+                style:
+                  top: 28%
+                  left: 39.7%
+                  '--paper-item-icon-color': var(--tray_2_color)
+                  background-color: rgba(0,0,0,0.5)
+                  box-shadow: 0 0 5px 5px var(--tray_2_bg)
+                  border-radius: 50px
+                  '--mdc-icon-size': 2.4em
+              - type: state-label
+                entity: sensor.YOUR_PRINTER_AMS_ID_tray_2
+                attribute: type
+                tap_action:
+                  action: none
+                style:
+                  top: 77%
+                  left: 40%
+                  text-align: center
+                  font-size: 1em
+                  background-color: rgba(0,0,0,0.4)
+                  box-shadow: 0 0 5px 5px rgba(0, 0, 0, 0.4)
+                  border-radius: 50px
+                  pointer-events: none
+                  color: '#FFFFFF'
+              - type: custom:config-template-card
+                entities:
+                  - sensor.YOUR_PRINTER_AMS_ID_tray_3
+                element:
+                  type: state-icon
+                  entity: sensor.YOUR_PRINTER_AMS_ID_tray_3
+                  icon: >-
+                    ${states['sensor.YOUR_PRINTER_AMS_ID_tray_3'].state.toLowerCase()
+                    != 'empty' ? 'fapro:filament-2' : 'mdi:tray' }
+                style:
+                  top: 28%
+                  left: 59.7%
+                  '--paper-item-icon-color': var(--tray_3_color)
+                  background-color: rgba(0,0,0,0.5)
+                  box-shadow: 0 0 5px 5px var(--tray_3_bg)
+                  border-radius: 50px
+                  '--mdc-icon-size': 2.4em
+              - type: state-label
+                entity: sensor.YOUR_PRINTER_AMS_ID_tray_3
+                attribute: type
+                tap_action:
+                  action: none
+                style:
+                  top: 77%
+                  left: 60%
+                  text-align: center
+                  font-size: 1em
+                  background-color: rgba(0,0,0,0.4)
+                  box-shadow: 0 0 5px 5px rgba(0, 0, 0, 0.4)
+                  border-radius: 50px
+                  pointer-events: none
+                  color: '#FFFFFF'
+              - type: custom:config-template-card
+                entities:
+                  - sensor.YOUR_PRINTER_AMS_ID_tray_4
+                element:
+                  type: state-icon
+                  entity: sensor.YOUR_PRINTER_AMS_ID_tray_4
+                  icon: >-
+                    ${states['sensor.YOUR_PRINTER_AMS_ID_tray_4'].state.toLowerCase()
+                    != 'empty' ? 'fapro:filament-2' : 'mdi:tray' }
+                style:
+                  top: 28%
+                  left: 79.6%
+                  '--paper-item-icon-color': var(--tray_4_color)
+                  background-color: rgba(0,0,0,0.5)
+                  box-shadow: 0 0 5px 5px var(--tray_4_bg)
+                  border-radius: 50px
+                  '--mdc-icon-size': 2.4em
+              - type: state-label
+                entity: sensor.YOUR_PRINTER_AMS_ID_tray_4
+                attribute: type
+                tap_action:
+                  action: none
+                style:
+                  top: 77%
+                  left: 79.6%
+                  text-align: center
+                  font-size: 1em
+                  background-color: rgba(0,0,0,0.4)
+                  box-shadow: 0 0 5px 5px rgba(0, 0, 0, 0.4)
+                  border-radius: 50px
+                  pointer-events: none
+                  color: '#FFFFFF'
+              - type: conditional
+                conditions:
+                  - entity: sensor.ams_sensor_temperature
+                    state_not: offline
+                elements:
+                  - type: conditional
+                    conditions:
+                      - entity: sensor.ams_sensor_temperature
+                        state_not:
+                          - unavailable
+                          - unknown
+                    elements:
+                      - entity: sensor.ams_sensor_temperature
+                        type: state-badge
+                        style:
+                          top: 50.75%
+                          left: 8%
+                          font-size: 0.75em
+                          color: rgba(0,0,0,0)
+                  - type: state-label
+                    entity: sensor.ams_sensor_humidity
+                    style:
+                      top: 38.5%
+                      left: 92.5%
+                      transform: translate(-50%, -50%)
+                      background-color: '#1c1c1c'
+                      border-radius: 50px
+                      border: 0.12em solid var(--humidity-border-color)
+                      color: '#FFFFFF'
+                      font-size: 1em
+                      padding: 0em
+                      text-align: center
+                      pointer-events: none
+            image: /local/media/bambuprinter/AMS_2.png
+            card_mod:
+              style: |
+                ha-card {
+                  background: none !important;
+                  border: none !important;
+                  box-shadow: none !important;
+
+                  /* --- 这是被修改的模板 (开始) --- */
+                  /*
+                    我假设了你原来的逻辑是：
+                    - 指数 4-5 (湿度低/好) = 黄色 (rgba(255, 255, 126, 0.5))
+                    - 指数 2-3 (湿度中/警告) = 橙色 (rgba(228,127,97,1.0))
+                    - 指数 1 (湿度高/差) = 红色 (rgba(194,74,72,1.0))
+                    
+                    我把这个逻辑映射到了百分比 (你可以自己调整 20% 和 50% 这两个阈值):
+                  */
+                  --humidity-border-color: {% set humidity = states('sensor.ams_sensor_humidity') | int(0) %}
+                                              {% if humidity < 20 %} rgba(255, 255, 126, 0.5); /* 湿度 < 20% (好) */
+                                              {% elif humidity < 50 %} rgba(228,127,97,1.0); /* 湿度 20-50% (中) */
+                                              {% else %} rgba(194,74,72,1.0); /* 湿度 > 50% (差) */
+                                              {% endif %}
+                  /* --- 这是被修改的模板 (结束) --- */
+
+                  --tray_1_color: {% if is_state_attr('sensor.YOUR_PRINTER_AMS_ID_tray_1', 'color', '#00000000') %} rgb(255, 255, 255); {% else %} {{state_attr('sensor.YOUR_PRINTER_AMS_ID_tray_1', 'color') }}; {% endif %}
+                  --tray_2_color: {% if is_state_attr('sensor.YOUR_PRINTER_AMS_ID_tray_2', 'color', '#00000000') %} rgb(255, 255, 255); {% else %} {{state_attr('sensor.YOUR_PRINTER_AMS_ID_tray_2', 'color') }}; {% endif %}
+                  --tray_3_color: {% if is_state_attr('sensor.YOUR_PRINTER_AMS_ID_tray_3', 'color', '#00000000') %} rgb(255, 255, 255); {% else %} {{state_attr('sensor.YOUR_PRINTER_AMS_ID_tray_3', 'color') }}; {% endif %}
+                  --tray_4_color: {% if is_state_attr('sensor.YOUR_PRINTER_AMS_ID_tray_4', 'color', '#00000000') %} rgb(255, 255, 255); {% else %} {{state_attr('sensor.YOUR_PRINTER_AMS_ID_tray_4', 'color') }}; {% endif %}
+                  --tray_1_bg: {% if is_state_attr('sensor.YOUR_PRINTER_AMS_ID_tray_1', 'active', true) %} rgba(255, 255, 126, 0.5); {% else %} rgba(0,0,0,0.5); {% endif %}
+                  --tray_2_bg: {% if is_state_attr('sensor.YOUR_PRINTER_AMS_ID_tray_2', 'active', true) %} rgba(255, 255, 126, 0.5); {% else %} rgba(0,0,0,0.5); {% endif %}
+                  --tray_3_bg: {% if is_state_attr('sensor.YOUR_PRINTER_AMS_ID_tray_3', 'active', true) %} rgba(255, 255, 126, 0.5); {% else %} rgba(0,0,0,0.5); {% endif %}
+                  --tray_4_bg: {% if is_state_attr('sensor.YOUR_PRINTER_AMS_ID_tray_4', 'active', true) %} rgba(255, 255, 126, 0.5); {% else %} rgba(0,0,0,0.5); {% endif %}
+                }
+          - type: custom:mushroom-entity-card
+            entity: sensor.ams_sensor_temperature
+            name: AMS温度
+          - type: custom:mushroom-entity-card
+            entity: sensor.ams_sensor_humidity
+            name: AMS 湿度
+          - type: custom:mushroom-template-card
+            entity: sensor.ams_slot_1
+            primary: |
+              AMS槽位1
+            secondary: >
+              {# 重复查找逻辑以获取剩余重量 #}
+
+              {% set target_id = states('sensor.ams_slot_1') | int(0) %}
+
+              {% if target_id != 0 %}
+                {% set spoolman_entities = integration_entities('spoolman') %}
+                {% set entity_id_found = namespace(value=none) %}
+                {% for e in spoolman_entities %}
+                  {% if state_attr(e, 'id') == target_id %}
+                    {% set entity_id_found.value = e %}
+                    {% break %}
+                  {% endif %}
+                {% endfor %}
+                
+                {% if entity_id_found.value %}
+              {{ state_attr(entity_id_found.value, 'filament_vendor_name') }}
+
+              {{ state_attr(entity_id_found.value, 'filament_name') }}
+
+              剩余: {{ state_attr(entity_id_found.value, 'remaining_weight') |
+              float(0) | round(2) }} g
+                {% endif %}
+              {% endif %}
+            icon: mdi:record-circle
+            tap_action:
+              action: more-info
+            color: |
+              {% set target_id = states('sensor.ams_slot_1') | int(0) %}
+              {% if target_id == 0 %}
+                grey
+              {% else %}
+                {% set spoolman_entities = integration_entities('spoolman') %}
+                {% set entity_id_found = namespace(value=none) %}
+                {% for e in spoolman_entities %}
+                  {% if state_attr(e, 'id') == target_id %}
+                    {% set entity_id_found.value = e %}
+                    {% break %}
+                  {% endif %}
+                {% endfor %}
+                
+                {% if entity_id_found.value %}
+                  {# 1. 尝试获取颜色属性 #}
+                  {% set hex_color = state_attr(entity_id_found.value, 'filament_color_hex') %}
+                  
+                  {# 2. 检查属性是否存在且不为空 #}
+                  {% if hex_color %}
+                    {# 3. 在前面加上 '#' 使其成为有效的 CSS 颜色 #}
+                    #{{ hex_color }}
+                  {% else %}
+                    {# 4. 如果实体有但颜色属性为空，则默认为灰色 #}
+                    grey
+                  {% endif %}
+                {% else %}
+                  {# 5. 如果未找到实体，则默认为灰色 #}
+                  grey
+                {% endif %}
+              {% endif %}
+            features_position: bottom
+            multiline_secondary: true
+            grid_options:
+              columns: 3
+              rows: 3
+            vertical: true
+          - type: custom:mushroom-template-card
+            entity: sensor.ams_slot_2
+            primary: |
+              AMS槽位2
+            secondary: >
+              {# 重复查找逻辑以获取剩余重量 #}
+
+              {% set target_id = states('sensor.ams_slot_2') | int(0) %}
+
+              {% if target_id != 0 %}
+                {% set spoolman_entities = integration_entities('spoolman') %}
+                {% set entity_id_found = namespace(value=none) %}
+                {% for e in spoolman_entities %}
+                  {% if state_attr(e, 'id') == target_id %}
+                    {% set entity_id_found.value = e %}
+                    {% break %}
+                  {% endif %}
+                {% endfor %}
+                
+                {% if entity_id_found.value %}
+              {{ state_attr(entity_id_found.value, 'filament_vendor_name') }}
+
+              {{ state_attr(entity_id_found.value, 'filament_name') }}
+
+              剩余: {{ state_attr(entity_id_found.value, 'remaining_weight') |
+              float(0) | round(2) }} g
+                {% endif %}
+              {% endif %}
+            icon: mdi:record-circle
+            tap_action:
+              action: more-info
+            color: |
+              {% set target_id = states('sensor.ams_slot_2') | int(0) %}
+              {% if target_id == 0 %}
+                grey
+              {% else %}
+                {% set spoolman_entities = integration_entities('spoolman') %}
+                {% set entity_id_found = namespace(value=none) %}
+                {% for e in spoolman_entities %}
+                  {% if state_attr(e, 'id') == target_id %}
+                    {% set entity_id_found.value = e %}
+                    {% break %}
+                  {% endif %}
+                {% endfor %}
+                
+                {% if entity_id_found.value %}
+                  {# 1. 尝试获取颜色属性 #}
+                  {% set hex_color = state_attr(entity_id_found.value, 'filament_color_hex') %}
+                  
+                  {# 2. 检查属性是否存在且不为空 #}
+                  {% if hex_color %}
+                    {# 3. 在前面加上 '#' 使其成为有效的 CSS 颜色 #}
+                    #{{ hex_color }}
+                  {% else %}
+                    {# 4. 如果实体有但颜色属性为空，则默认为灰色 #}
+                    grey
+                  {% endif %}
+                {% else %}
+                  {# 5. 如果未找到实体，则默认为灰色 #}
+                  grey
+                {% endif %}
+              {% endif %}
+            features_position: bottom
+            multiline_secondary: true
+            grid_options:
+              columns: 3
+              rows: 3
+            vertical: true
+          - type: custom:mushroom-template-card
+            entity: sensor.ams_slot_3
+            primary: |
+              AMS槽位3
+            secondary: >
+              {# 重复查找逻辑以获取剩余重量 #}
+
+              {% set target_id = states('sensor.ams_slot_3') | int(0) %}
+
+              {% if target_id != 0 %}
+                {% set spoolman_entities = integration_entities('spoolman') %}
+                {% set entity_id_found = namespace(value=none) %}
+                {% for e in spoolman_entities %}
+                  {% if state_attr(e, 'id') == target_id %}
+                    {% set entity_id_found.value = e %}
+                    {% break %}
+                  {% endif %}
+                {% endfor %}
+                
+                {% if entity_id_found.value %}
+              {{ state_attr(entity_id_found.value, 'filament_vendor_name') }}
+
+              {{ state_attr(entity_id_found.value, 'filament_name') }}
+
+              剩余: {{ state_attr(entity_id_found.value, 'remaining_weight') |
+              float(0) | round(2) }} g
+                {% endif %}
+              {% endif %}
+            icon: mdi:record-circle
+            tap_action:
+              action: more-info
+            color: |
+              {% set target_id = states('sensor.ams_slot_3') | int(0) %}
+              {% if target_id == 0 %}
+                grey
+              {% else %}
+                {% set spoolman_entities = integration_entities('spoolman') %}
+                {% set entity_id_found = namespace(value=none) %}
+                {% for e in spoolman_entities %}
+                  {% if state_attr(e, 'id') == target_id %}
+                    {% set entity_id_found.value = e %}
+                    {% break %}
+                  {% endif %}
+                {% endfor %}
+                
+                {% if entity_id_found.value %}
+                  {# 1. 尝试获取颜色属性 #}
+                  {% set hex_color = state_attr(entity_id_found.value, 'filament_color_hex') %}
+                  
+                  {# 2. 检查属性是否存在且不为空 #}
+                  {% if hex_color %}
+                    {# 3. 在前面加上 '#' 使其成为有效的 CSS 颜色 #}
+                    #{{ hex_color }}
+                  {% else %}
+                    {# 4. 如果实体有但颜色属性为空，则默认为灰色 #}
+                    grey
+                  {% endif %}
+                {% else %}
+                  {# 5. 如果未找到实体，则默认为灰色 #}
+                  grey
+                {% endif %}
+              {% endif %}
+            features_position: bottom
+            multiline_secondary: true
+            grid_options:
+              columns: 3
+              rows: 3
+            vertical: true
+          - type: custom:mushroom-template-card
+            entity: sensor.ams_slot_4
+            primary: |
+              AMS槽位4
+            secondary: >
+              {# 重复查找逻辑以获取剩余重量 #}
+
+              {% set target_id = states('sensor.ams_slot_4') | int(0) %}
+
+              {% if target_id != 0 %}
+                {% set spoolman_entities = integration_entities('spoolman') %}
+                {% set entity_id_found = namespace(value=none) %}
+                {% for e in spoolman_entities %}
+                  {% if state_attr(e, 'id') == target_id %}
+                    {% set entity_id_found.value = e %}
+                    {% break %}
+                  {% endif %}
+                {% endfor %}
+                
+                {% if entity_id_found.value %}
+              {{ state_attr(entity_id_found.value, 'filament_vendor_name') }}
+
+              {{ state_attr(entity_id_found.value, 'filament_name') }}
+
+              剩余: {{ state_attr(entity_id_found.value, 'remaining_weight') |
+              float(0) | round(2) }} g
+                {% endif %}
+              {% endif %}
+            icon: mdi:record-circle
+            tap_action:
+              action: more-info
+            color: |
+              {% set target_id = states('sensor.ams_slot_4') | int(0) %}
+              {% if target_id == 0 %}
+                grey
+              {% else %}
+                {% set spoolman_entities = integration_entities('spoolman') %}
+                {% set entity_id_found = namespace(value=none) %}
+                {% for e in spoolman_entities %}
+                  {% if state_attr(e, 'id') == target_id %}
+                    {% set entity_id_found.value = e %}
+                    {% break %}
+                  {% endif %}
+                {% endfor %}
+                
+                {% if entity_id_found.value %}
+                  {# 1. 尝试获取颜色属性 #}
+                  {% set hex_color = state_attr(entity_id_found.value, 'filament_color_hex') %}
+                  
+                  {# 2. 检查属性是否存在且不为空 #}
+                  {% if hex_color %}
+                    {# 3. 在前面加上 '#' 使其成为有效的 CSS 颜色 #}
+                    #{{ hex_color }}
+                  {% else %}
+                    {# 4. 如果实体有但颜色属性为空，则默认为灰色 #}
+                    grey
+                  {% endif %}
+                {% else %}
+                  {# 5. 如果未找到实体，则默认为灰色 #}
+                  grey
+                {% endif %}
+              {% endif %}
+            features_position: bottom
+            multiline_secondary: true
+            grid_options:
+              columns: 3
+              rows: 3
+            vertical: true
+          - type: custom:mushroom-title-card
+            alignment: center
+            title: 外挂料盘
+          - type: picture-elements
+            elements:
+              - type: custom:config-template-card
+                entities:
+                  - sensor.YOUR_PRINTER_ID_externalspool_external_spool
+                element:
+                  type: state-icon
+                  entity: sensor.YOUR_PRINTER_ID_externalspool_external_spool
+                  icon: >-
+                    ${states['sensor.YOUR_PRINTER_ID_externalspool_external_spool'].state.toLowerCase()
+                    != 'empty' ? 'fapro:filament-2' : 'mdi:tray' }
+                style:
+                  top: 50%
+                  left: 50%
+                  transform: translate(-50%, -50%) scale(200%)
+                  '--paper-item-icon-color': var(--tray_vt_color)
+                  background-color: rgba(0,0,0,0.5)
+                  box-shadow: 0 0 5px 5px var(--tray_vt_bg)
+                  border-radius: 50px
+                  '--mdc-icon-size': 1.8em
+              - type: state-label
+                entity: sensor.YOUR_PRINTER_ID_externalspool_external_spool
+                attribute: type
+                tap_action:
+                  action: none
+                style:
+                  top: 50%
+                  left: 85%
+                  text-align: center
+                  font-size: 1em
+                  background-color: rgba(0,0,0,0.4)
+                  box-shadow: 0 0 5px 5px rgba(0, 0, 0, 0.4)
+                  border-radius: 50px
+                  pointer-events: none
+                  color: '#FFFFFF'
+            image: /local/media/bambuprinter/spool.png
+            card_mod:
+              style: |
+                ha-card {
+                  margin-left: auto;
+                  margin-right: auto;
+                  width: 50%;
+                  height: 50%;
+                  background: none !important;
+                  border: none !important;
+                  box-shadow: none !important;
+                  --tray_vt_color: {{state_attr('sensor.YOUR_PRINTER_ID_externalspool_external_spool', 'color') }};
+                  --tray_vt_bg: {% if is_state_attr('sensor.YOUR_PRINTER_ID_externalspool_external_spool', 'active', true) %} rgba(255, 255, 126, 0.5); {% else %} rgba(0,0,0,0.5); {% endif %}
+                }
+          - type: custom:mushroom-template-card
+            entity: input_number.spoolman_id
+            primary: |
+              {# 1. 获取 input_number 中的 ID #}
+              {% set target_id = states('input_number.spoolman_id') | int(0) %}
+
+              {% if target_id == 0 %}
+                未选择料盘
+              {% else %}
+                {# 2. 查找所有 spoolman 实体 #}
+                {% set spoolman_entities = integration_entities('spoolman') %}
+                {% set entity_id_found = namespace(value=none) %}
+                
+                {# 3. 遍历实体，查找属性 ID 匹配的那个 #}
+                {% for e in spoolman_entities %}
+                  {% if state_attr(e, 'id') == target_id %}
+                    {% set entity_id_found.value = e %}
+                    {% break %}
+                  {% endif %}
+                {% endfor %}
+                
+                {# 4. 显示找到的实体的名称 #}
+                {% if entity_id_found.value %}
+                  外挂料盘：{{ state_attr(entity_id_found.value, 'friendly_name') }}
+                {% else %}
+                  ID: {{ target_id }} (未找到)
+                {% endif %}
+              {% endif %}
+            secondary: |
+              {# 重复查找逻辑以获取剩余重量 #}
+              {% set target_id = states('input_number.spoolman_id') | int(0) %}
+              {% if target_id != 0 %}
+                {% set spoolman_entities = integration_entities('spoolman') %}
+                {% set entity_id_found = namespace(value=none) %}
+                {% for e in spoolman_entities %}
+                  {% if state_attr(e, 'id') == target_id %}
+                    {% set entity_id_found.value = e %}
+                    {% break %}
+                  {% endif %}
+                {% endfor %}
+                
+                {% if entity_id_found.value %}
+                  剩余: {{ state_attr(entity_id_found.value, 'remaining_weight') | float(0) | round(2) }} g
+                {% endif %}
+              {% endif %}
+            icon: mdi:record-circle
+            tap_action:
+              action: more-info
+            color: |
+              {% set target_id = states('input_number.spoolman_id') | int(0) %}
+              {% if target_id == 0 %}
+                grey
+              {% else %}
+                {% set spoolman_entities = integration_entities('spoolman') %}
+                {% set entity_id_found = namespace(value=none) %}
+                {% for e in spoolman_entities %}
+                  {% if state_attr(e, 'id') == target_id %}
+                    {% set entity_id_found.value = e %}
+                    {% break %}
+                  {% endif %}
+                {% endfor %}
+                
+                {% if entity_id_found.value %}
+                  {# 1. 尝试获取颜色属性 #}
+                  {% set hex_color = state_attr(entity_id_found.value, 'filament_color_hex') %}
+                  
+                  {# 2. 检查属性是否存在且不为空 #}
+                  {% if hex_color %}
+                    {# 3. 在前面加上 '#' 使其成为有效的 CSS 颜色 #}
+                    #{{ hex_color }}
+                  {% else %}
+                    {# 4. 如果实体有但颜色属性为空，则默认为灰色 #}
+                    grey
+                  {% endif %}
+                {% else %}
+                  {# 5. 如果未找到实体，则默认为灰色 #}
+                  grey
+                {% endif %}
+              {% endif %}
+            features_position: bottom
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: custom:mushroom-title-card
+            title: 库存料盘
+            alignment: center
+            title_tap_action:
+              action: none
+            subtitle_tap_action:
+              action: url
+              url_path: http://YOUR_SPOOLMAN_IP:PORT/spool
+            subtitle: spoolman
+          - type: custom:auto-entities
+            filter:
+              include:
+                - integration: '*spoolman*'
+                  sort:
+                    method: attribute
+                    attribute: location
+                    reverse: false
+                  attributes:
+                    archived: false
+                  options:
+                    type: custom:button-card
+                    layout: icon_name_state2nd
+                    show_label: true
+                    variables:
+                      spool_id: '[[[ return entity.attributes.id; ]]]'
+                      color_hex: '[[[ return entity.attributes.filament_color_hex; ]]]'
+                      location: '[[[ return entity.attributes.location; ]]]'
+                      remaining: '[[[ return entity.attributes.remaining_weight; ]]]'
+                    icon: mdi:printer-3d-nozzle
+                    size: 25px
+                    styles:
+                      name:
+                        - font-size: 14px
+                      label:
+                        - font-size: 12px
+                      grid:
+                        - grid-template-areas: '"b i n" "b i l"'
+                        - grid-template-columns: 5px 20px 1fr auto
+                        - grid-template-rows: 1fr 1fr
+                        - align-items: center
+                        - column-gap: 8px
+                      icon:
+                        - color: |
+                            [[[
+                              let hex = variables.color_hex;
+                              if (!hex) return 'var(--primary-text-color)';
+                              hex = hex.replace('#', '');
+                              if (hex.length === 3) {
+                                hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+                              }
+                              let r = parseInt(hex.substring(0, 2), 16);
+                              let g = parseInt(hex.substring(2, 4), 16);
+                              let b = parseInt(hex.substring(4, 6), 16);
+                              return `rgb(${r}, ${g}, ${b})`;
+                            ]]]
+                    name: |
+                      [[[
+                        if (variables.location) {
+                          return `${variables.spool_id} - ${entity.attributes.friendly_name} (${variables.location})`;
+                        }
+                        return `${variables.spool_id} - ${entity.attributes.friendly_name}`;
+                      ]]]
+                    label: >-
+                      [[[ return `${parseFloat(variables.remaining).toFixed(2)}
+                      g`; ]]]
+                    tap_action:
+                      action: call-service
+                      service: rest_command.update_externel_spool
+                      data:
+                        id: '[[[ return variables.spool_id; ]]]'
+            sort:
+              method: attribute
+              attribute: klipper_active_spool
+              reverse: true
+            card:
+              type: grid
+              columns: 2
+              square: false
+            card_param: cards
+    background:
+      opacity: 33
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+    type: sections
+    max_columns: 3
+    cards: []
+    header: {}
